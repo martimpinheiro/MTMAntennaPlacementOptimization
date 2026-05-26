@@ -1,0 +1,29 @@
+{
+    "rows": 6,
+    "cols": 6,
+    "num_providers": 4,
+    "penalty_cost": 800,
+    "antenna_slot_cost": 100,
+    "banned_zones": [
+        4,
+        19,
+        30,
+        33
+    ],
+    "forest_zones": [
+        1,
+        6,
+        10,
+        11,
+        29,
+        32,
+        34
+    ],
+    "building_zones": [
+        0,
+        7,
+        8,
+        16,
+        31
+    ]
+}

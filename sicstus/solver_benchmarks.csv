@@ -1,0 +1,6 @@
+Grid_Size,Total_Cells,Execution_Time_MS,Network_Cost,Coverage_QoS
+4x4,16,29.78,N/A,N/A%
+5x5,25,22.21,N/A,N/A%
+6x6,36,18.54,N/A,N/A%
+7x7,49,22.58,N/A,N/A%
+8x8,64,14.17,N/A,N/A%
