@@ -2,28 +2,35 @@
     "rows": 6,
     "cols": 6,
     "num_providers": 4,
+    "provider_radii": [
+        0,
+        1,
+        1,
+        2
+    ],
     "penalty_cost": 800,
     "antenna_slot_cost": 100,
     "banned_zones": [
-        4,
-        19,
-        30,
-        33
+        5,
+        9,
+        12,
+        27
     ],
     "forest_zones": [
-        1,
-        6,
-        10,
-        11,
-        29,
-        32,
-        34
+        19,
+        22,
+        25,
+        26,
+        30,
+        31,
+        32
     ],
     "building_zones": [
-        0,
-        7,
         8,
-        16,
-        31
-    ]
+        10,
+        11,
+        20,
+        28
+    ],
+    "seed": 42
 }
