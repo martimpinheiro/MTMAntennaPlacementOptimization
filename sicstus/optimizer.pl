@@ -1,6 +1,7 @@
-%% solver_engine.pl
+%% optimizer.pl
 :- use_module(library(clpfd)).
 :- use_module(library(lists)).
+:- use_module(library(between)).
 
 :- ensure_loaded('map_data.pl').
 
@@ -70,7 +71,7 @@ run_optimization(GlobalCost, CoveragePercentage) :-
     labeling([minimize(GlobalCost)], AllVars),
 
     % STEP 4: Compute coverage percentage (all variables are now ground)
-    sum_list(S0, D0), sum_list(S1, D1), sum_list(S2, D2), sum_list(S3, D3),
+    sumlist(S0, D0), sumlist(S1, D1), sumlist(S2, D2), sumlist(S3, D3),
     TotalDrops is D0 + D1 + D2 + D3,
     GridSizeM1 is GridSize - 1,
     findall(I, (between(0, GridSizeM1, I), \+ is_banned(I)), Coverable),
