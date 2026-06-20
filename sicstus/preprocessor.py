@@ -1,8 +1,20 @@
+"""
+Translates map_data.json into Prolog facts for the SICStus solver.
+
+Generated facts:
+  grid_dimensions(TotalCells, Rows, Cols).
+  provider_radius(K, R).
+  is_banned(CellIdx).
+  is_forest(CellIdx).
+  is_building(CellIdx).
+"""
+
 import json
 import os
 
+
 def generate_prolog_facts(map_json_path=None, output_path=None):
-    """Translates map_data.json into minimal Prolog facts for solver_engine.pl."""
+    """Read map_data.json and write the corresponding Prolog fact file."""
     script_dir = os.path.dirname(os.path.abspath(__file__))
 
     if map_json_path is None:
@@ -42,6 +54,7 @@ def generate_prolog_facts(map_json_path=None, output_path=None):
             f.write(f'is_building({idx}).\n')
 
     print(f'Generated {output_path} ({grid_size} cells, {rows}x{cols})')
+
 
 if __name__ == '__main__':
     generate_prolog_facts()

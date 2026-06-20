@@ -1,9 +1,27 @@
+"""
+OR-Tools CP-SAT solver for the Multi-Tenant Antenna Placement problem.
+
+Decision variables (Boolean):
+  t[i]     - tower built at cell i
+  a[k][i]  - provider k has antenna at cell i
+  s[k][j]  - cell j is NOT covered by provider k (slack)
+
+Constraints:
+  C1: t[i] = 0 for banned cells (mountains)
+  C2: a[k][i] <= t[i]  (antenna needs a tower)
+  C3: sum_k a[k][i] <= 4  (max 4 tenants per tower)
+  C4: sum_{i in cov(k,j)} a[k][i] + s[k][j] >= 1  (cover or pay penalty)
+
+Objective: minimise tower costs + antenna slots (100 each) + uncoverage penalties (800 each)
+"""
+
 import os
 import json
 import sys
 from ortools.sat.python import cp_model
 
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 
 def load_map_data():
     filename = os.path.join(_ROOT, 'map_data.json')
@@ -13,8 +31,9 @@ def load_map_data():
     with open(filename, 'r') as f:
         return json.load(f)
 
+
 def get_covered_cells(src_idx, radius, grid_cols, grid_rows):
-    """Returns all cell indices reachable from src within Manhattan radius."""
+    """Return all cell indices within Manhattan radius of src_idx."""
     row = src_idx // grid_cols
     col = src_idx % grid_cols
     return [
@@ -24,7 +43,9 @@ def get_covered_cells(src_idx, radius, grid_cols, grid_rows):
         if abs(row - r) + abs(col - c) <= radius
     ]
 
+
 def solve_network(verbose=True, timeout=10.0):
+    """Build and solve the antenna placement model. Returns {cost, coverage_pct} or None."""
     map_config = load_map_data()
 
     GRID_ROWS      = map_config.get('rows', 6)
@@ -46,6 +67,7 @@ def solve_network(verbose=True, timeout=10.0):
         if cell_idx in FOREST_ZONES:   return 1500
         return 1000
 
+    # Precompute which source cells can cover each (provider, target) pair
     coverage_sources = {
         (k, tgt): [
             src for src in range(NUM_CELLS)
@@ -63,14 +85,17 @@ def solve_network(verbose=True, timeout=10.0):
     slacks   = {k: {tgt: model.NewBoolVar(f'slack_p{k}_c{tgt}') for tgt in COVERABLE}
                 for k in range(NUM_PROVIDERS)}
 
+    # C1 - no tower on mountain
     for i in BANNED_ZONES:
         model.Add(towers[i] == 0)
 
+    # C2 + C3 - antenna requires tower; at most MAX_TENANTS per tower
     for i in range(NUM_CELLS):
         for k in range(NUM_PROVIDERS):
             model.Add(antennas[k][i] <= towers[i])
         model.Add(sum(antennas[k][i] for k in range(NUM_PROVIDERS)) <= MAX_TENANTS)
 
+    # C4 - cover cell j with provider k, or activate the slack (pay penalty)
     for (k, tgt), sources in coverage_sources.items():
         model.Add(sum(antennas[k][src] for src in sources) + slacks[k][tgt] >= 1)
 
@@ -88,7 +113,7 @@ def solve_network(verbose=True, timeout=10.0):
 
     if status not in (cp_model.OPTIMAL, cp_model.FEASIBLE):
         if verbose:
-            print("Solver was unable to compute a feasible constraint arrangement.")
+            print("No solution found within time limit.")
         return None
 
     cost         = int(solver.ObjectiveValue())
@@ -98,24 +123,21 @@ def solve_network(verbose=True, timeout=10.0):
     coverage_pct = ((total_poss - total_drops) * 100) // total_poss
 
     if verbose:
-        print("=" * 60)
-        print("   MULTI-BAND REIFIED INFRASTRUCTURE LAYOUT OPTIMIZER   ")
-        print("=" * 60)
-        print(f"Global Net Cost Objective : €{cost}")
-        print(f"Physical Towers Constructed: {sum(solver.Value(towers[i]) for i in range(NUM_CELLS))} Units")
-        print("-" * 60)
-        print("PROVIDER CAPABILITY DEPLOYMENT ANALYSIS:")
+        towers_built = sum(solver.Value(towers[i]) for i in range(NUM_CELLS))
+        print(f"\nSolution found!")
+        print(f"  Total cost : €{cost}")
+        print(f"  Towers built: {towers_built}")
+        print(f"  Overall coverage: {coverage_pct}%")
+        print()
+        print("Provider breakdown:")
         for k in range(NUM_PROVIDERS):
             k_ants  = sum(solver.Value(antennas[k][i]) for i in range(NUM_CELLS))
             k_drops = sum(solver.Value(slacks[k][tgt]) for tgt in COVERABLE)
             k_cov   = ((len(COVERABLE) - k_drops) * 100) // len(COVERABLE)
-            print(f" -> Provider {k} [R={PROVIDER_RADII[k]}]: "
-                  f"Antennas = {k_ants:2d} | Drops = {k_drops:2d} | Coverage = {k_cov}%")
-        print("-" * 60)
-        print("GRID TOPOGRAPHY LEDGER:")
-        print(".=Plains | F=Forest | B=Building | M=Mountain (Banned)")
-        print("TX(Y) -> Tower built with X active co-located antennas on Y terrain")
-        print("-" * 60)
+            print(f"  P{k} (radius={PROVIDER_RADII[k]}): {k_ants} antennas, {k_cov}% coverage")
+        print()
+        print("Grid layout:  . Plains  F Forest  B Building  M Mountain")
+        print("              T<n>(<terrain>) = tower with n active antennas")
         for r in range(GRID_ROWS):
             row_str = []
             for c in range(GRID_COLS):
@@ -130,9 +152,10 @@ def solve_network(verbose=True, timeout=10.0):
                 else:
                     row_str.append(f"  {t_char}  ")
             print(" ".join(row_str))
-        print("=" * 60)
+        print()
 
     return {'cost': cost, 'coverage_pct': coverage_pct}
+
 
 if __name__ == '__main__':
     if '--benchmark' in sys.argv:
