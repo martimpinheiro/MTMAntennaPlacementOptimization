@@ -26,7 +26,7 @@ GRID_SIZES   = [4, 5, 6, 7, 8, 12, 16, 32, 64]
 SEEDS        = [42]
 OR_TIMEOUT_S  = 60
 SIC_TIMEOUT_S = 60
-CSV_FILE     = os.path.join(ROOT_DIR, 'benchmark_results_ff.csv')
+CSV_FILE     = os.path.join(ROOT_DIR, 'benchmark_results.csv')
 
 PROLOG_GOAL = (
     "run_optimization(Cost, Coverage), "
