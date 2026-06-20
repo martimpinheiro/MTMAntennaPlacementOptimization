@@ -22,10 +22,11 @@ from map_generator import generate_and_save_map
 from sicstus.preprocessor import generate_prolog_facts
 
 # ── Configuration ────────────────────────────────────────────────────────────
-GRID_SIZES = range(4, 9)        # 4×4 through 8×8
-SEEDS      = [42, 123, 456]     # runs per grid size
-TIMEOUT_S  = 60
-CSV_FILE   = os.path.join(ROOT_DIR, 'benchmark_results.csv')
+GRID_SIZES   = [4, 5, 6, 7, 8, 12, 16, 32, 64]
+SEEDS        = [42]
+OR_TIMEOUT_S  = 60
+SIC_TIMEOUT_S = 60
+CSV_FILE     = os.path.join(ROOT_DIR, 'benchmark_results_ff.csv')
 
 PROLOG_GOAL = (
     "run_optimization(Cost, Coverage), "
@@ -55,7 +56,8 @@ def parse_result(stdout):
 def run_ortools(timeout):
     start = time.time()
     proc = subprocess.Popen(
-        [sys.executable, os.path.join('ortools', 'optimizer.py'), '--benchmark'],
+        [sys.executable, os.path.join('ortools', 'optimizer.py'),
+         '--benchmark', '--timeout', str(timeout)],
         stdout=subprocess.PIPE, stderr=subprocess.PIPE,
         text=True, cwd=ROOT_DIR,
     )
@@ -89,10 +91,10 @@ def csv_val(result, key):
 
 
 def run_benchmarks(sicstus_bin):
-    total_runs = len(list(GRID_SIZES)) * len(SEEDS)
+    total_runs = len(GRID_SIZES) * len(SEEDS)
     print(f"Benchmark: {total_runs} runs  "
-          f"({len(list(GRID_SIZES))} grid sizes × {len(SEEDS)} seeds, "
-          f"timeout {TIMEOUT_S}s per solver)")
+          f"({len(GRID_SIZES)} grid sizes × {len(SEEDS)} seeds)")
+    print(f"  OR-Tools timeout: {OR_TIMEOUT_S}s  |  SICStus timeout: {SIC_TIMEOUT_S}s")
     print(f"Output → {CSV_FILE}\n")
 
     with open(CSV_FILE, 'w', newline='') as f:
@@ -113,12 +115,12 @@ def run_benchmarks(sicstus_bin):
                     generate_prolog_facts()
 
                 print(f"  OR-Tools ...", end='', flush=True)
-                or_result, or_ms = run_ortools(TIMEOUT_S)
+                or_result, or_ms = run_ortools(OR_TIMEOUT_S)
                 or_label = f"{or_result['cost']} EUR" if or_result else 'TIMEOUT'
                 print(f"  {or_ms:8.1f} ms   {or_label}")
 
                 print(f"  SICStus  ...", end='', flush=True)
-                sic_result, sic_ms = run_sicstus(sicstus_bin, TIMEOUT_S)
+                sic_result, sic_ms = run_sicstus(sicstus_bin, SIC_TIMEOUT_S)
                 sic_label = f"{sic_result['cost']} EUR" if sic_result else 'TIMEOUT'
                 print(f"  {sic_ms:8.1f} ms   {sic_label}")
 

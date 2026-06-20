@@ -68,7 +68,7 @@ run_optimization(GlobalCost, CoveragePercentage) :-
 
     % STEP 3: Optimize via branch-and-bound labeling
     append([T, P0, P1, P2, P3, S0, S1, S2, S3], AllVars),
-    labeling([minimize(GlobalCost)], AllVars),
+    labeling([ff, minimize(GlobalCost)], AllVars),
 
     % STEP 4: Compute coverage percentage (all variables are now ground)
     sumlist(S0, D0), sumlist(S1, D1), sumlist(S2, D2), sumlist(S3, D3),

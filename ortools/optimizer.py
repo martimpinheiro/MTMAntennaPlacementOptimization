@@ -136,7 +136,8 @@ def solve_network(verbose=True, timeout=10.0):
 
 if __name__ == '__main__':
     if '--benchmark' in sys.argv:
-        result = solve_network(verbose=False)
+        timeout = float(sys.argv[sys.argv.index('--timeout') + 1]) if '--timeout' in sys.argv else 10.0
+        result = solve_network(verbose=False, timeout=timeout)
         if result:
             print(f"RESULT:{result['cost']},{result['coverage_pct']}")
     else:
