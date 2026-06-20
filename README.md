@@ -54,6 +54,8 @@ sicstus/
 
 ## Running
 
+> **Note:** The commands below use `export` and Bash syntax. They work on Linux, macOS, and Windows Subsystem for Linux (WSL). On native Windows (PowerShell/cmd), use `$env:SICSTUS_PATH = "..."` (PowerShell) or `set SICSTUS_PATH=...` (cmd) instead of `export`.
+
 **Generate a map:**
 ```bash
 python map_generator.py                        # random 6x6
